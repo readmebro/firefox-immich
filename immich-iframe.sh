@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # ------------ CONFIGURATION ------------
-IDLE_THRESHOLD_MS=3000     # 5 minutes
+IDLE_THRESHOLD_MS=300000     # 5 minutes
 CHECK_INTERVAL=5             # Check every 5 seconds
 URL="https://example.com"
 FIREFOX_CMD="firefox"
 
 # ------------ STATE ------------
-firefox_active=false
+firefox_pid=""
 
 # ------------ CLEANUP FUNCTION ------------
 cleanup() {
     echo "[INFO] Exiting. Cleaning up…"
-    if [ "$firefox_active" = true ]; then
-        pkill -f "$FIREFOX_CMD"
+    if [ -n "$firefox_pid" ] && kill -0 "$firefox_pid" 2>/dev/null; then
+        kill "$firefox_pid"
     fi
     exit 0
 }
@@ -45,16 +45,16 @@ while true; do
     fi
 
     if [ "$idle_time" -gt "$IDLE_THRESHOLD_MS" ] && ! is_fullscreen_video_playing; then
-        if [ "$firefox_active" = false ]; then
+        if [ -z "$firefox_pid" ] || ! kill -0 "$firefox_pid" 2>/dev/null; then
             echo "[INFO] Idle detected. Launching Firefox..."
             $FIREFOX_CMD --kiosk "$URL" &
-            firefox_active=true
+            firefox_pid=$!
         fi
     else
-        if [ "$firefox_active" = true ]; then
-            echo "[INFO] User active or video playing. Closing Firefox..."
-            pkill -f "$FIREFOX_CMD"
-            firefox_active=false
+        if [ -n "$firefox_pid" ] && kill -0 "$firefox_pid" 2>/dev/null; then
+            echo "[INFO] User active or video playing. Closing Firefox instance..."
+            kill "$firefox_pid"
+            firefox_pid=""
         fi
     fi
 
