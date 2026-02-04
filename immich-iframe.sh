@@ -3,7 +3,7 @@
 # ------------ CONFIGURATION ------------
 IDLE_THRESHOLD_MS=600000     # 10 minutes
 CHECK_INTERVAL=5             # Check every 5 seconds
-IMMICH_CMD="/usr/bin/immichiframe"  # Replace with actual command after .deb is installed
+IMMICH_CMD="immichiframe"    # Just the command, rely on PATH
 
 # ------------ HELPER FUNCTION: Check fullscreen video ------------
 is_fullscreen_video_playing() {
@@ -35,7 +35,7 @@ while true; do
     if [ "$idle_time" -gt "$IDLE_THRESHOLD_MS" ] && ! is_fullscreen_video_playing; then
         if [ "$launched" = false ]; then
             echo "[INFO] 10 minutes idle detected. Launching ImmichIframe..."
-            $IMMICH_CMD &
+            env PATH="$PATH" $IMMICH_CMD &
             launched=true
         fi
     fi
