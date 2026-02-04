@@ -7,12 +7,12 @@ URL="https://example.com"
 FIREFOX_CMD="firefox"
 
 # ------------ STATE ------------
-firefox_active=false
+firefox_active="false"
 
 # ------------ CLEANUP FUNCTION ------------
 cleanup() {
     echo "[INFO] Exiting. Cleaning up…"
-    if $firefox_active; then
+    if [ "$firefox_active" = "true" ]; then
         pkill -f "$FIREFOX_CMD"
     fi
     exit 0
@@ -34,19 +34,19 @@ is_fullscreen_video_playing() {
 
 # ------------ MAIN LOOP ------------
 while true; do
-    idle_time=$(xprintidle)
+    idle_time=$(xprintidle 2>/dev/null || echo 0)
 
     if [ "$idle_time" -gt "$IDLE_THRESHOLD_MS" ] && ! is_fullscreen_video_playing; then
-        if ! $firefox_active; then
+        if [ "$firefox_active" = "false" ]; then
             echo "[INFO] Idle detected. Launching Firefox..."
             $FIREFOX_CMD --kiosk "$URL" &
-            firefox_active=true
+            firefox_active="true"
         fi
     else
-        if $firefox_active; then
+        if [ "$firefox_active" = "true" ]; then
             echo "[INFO] User active or video playing. Closing Firefox..."
             pkill -f "$FIREFOX_CMD"
-            firefox_active=false
+            firefox_active="false"
         fi
     fi
 
