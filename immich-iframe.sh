@@ -1,23 +1,9 @@
 #!/bin/bash
 
 # ------------ CONFIGURATION ------------
-IDLE_THRESHOLD_MS=300000     # 5 minutes
+IDLE_THRESHOLD_MS=600000     # 10 minutes
 CHECK_INTERVAL=5             # Check every 5 seconds
-URL="https://example.com"
-FIREFOX_CMD="firefox"
-
-# ------------ STATE ------------
-firefox_pid=""
-
-# ------------ CLEANUP FUNCTION ------------
-cleanup() {
-    echo "[INFO] Exiting. Cleaning up…"
-    if [ -n "$firefox_pid" ] && kill -0 "$firefox_pid" 2>/dev/null; then
-        kill "$firefox_pid"
-    fi
-    exit 0
-}
-trap cleanup SIGINT SIGTERM
+IMMICH_CMD="/usr/bin/immichiframe"  # Replace with actual command after .deb is installed
 
 # ------------ HELPER FUNCTION: Check fullscreen video ------------
 is_fullscreen_video_playing() {
@@ -36,6 +22,8 @@ is_fullscreen_video_playing() {
 }
 
 # ------------ MAIN LOOP ------------
+launched=false
+
 while true; do
     idle_time=$(xprintidle 2>/dev/null || echo 0)
 
@@ -45,16 +33,10 @@ while true; do
     fi
 
     if [ "$idle_time" -gt "$IDLE_THRESHOLD_MS" ] && ! is_fullscreen_video_playing; then
-        if [ -z "$firefox_pid" ] || ! kill -0 "$firefox_pid" 2>/dev/null; then
-            echo "[INFO] Idle detected. Launching Firefox..."
-            $FIREFOX_CMD --kiosk "$URL" &
-            firefox_pid=$!
-        fi
-    else
-        if [ -n "$firefox_pid" ] && kill -0 "$firefox_pid" 2>/dev/null; then
-            echo "[INFO] User active or video playing. Closing Firefox instance..."
-            kill "$firefox_pid"
-            firefox_pid=""
+        if [ "$launched" = false ]; then
+            echo "[INFO] 10 minutes idle detected. Launching ImmichIframe..."
+            $IMMICH_CMD &
+            launched=true
         fi
     fi
 
